@@ -8,14 +8,16 @@ import os
 dt = 10**(-3)
 neurons = 10**4
 sel_neurons = 100
-g, J = 4, -2
-tau, tau_d = 1, 10
+g, J = 4, -10
+tau, tau_d = 1, 50
 eta_mean = 1
-max_time = 50
+max_time = 300
 delta = 1
 
-vr = -40
-vth = 100
+current_start, current_stop = 150, 151
+I0 = 42
+
+vr, vth = -40, 100
 a = abs(vth/vr)
 
 def euler(I, dt=10**(-3)):
@@ -47,37 +49,15 @@ def euler_kuramoto(current, dt=10**(-3)):
     z = np.array(z)
     return np.absolute(z)
 
-# Retrieving and processing the data
-v_file = open('v_avg.dat', 'r')
-v = []
-for el in v_file.readline()[:-2].split(',') :
-    v.append(float(el))
-
-r_file = open('r_avg.dat', 'r')
-r = []
-for el in r_file.readline()[:-2].split(',') :
-    r.append(float(el))
-
-z_file = open('z.dat', 'r')
-z = []
-for el in z_file.readline()[:-2].split(',') :
-    z.append(float(el))
-z = np.array(z)
-
-input_file = open('input_current.dat', 'r')
-current = []
-for el in input_file.readline()[:-2].split(',') :
-    current.append(float(el))
-current = np.array(current)
-
-raster_file = open('raster.dat', 'r')
-times_raster, raster = [], []
-for line in raster_file :
-    times_raster.append(float(line.split('  ')[0]))
-    raster.append(int(line.split('  ')[1].rstrip()))
-
 # Generating subplots
-fig, ax = plt.subplots(5, 1, figsize=(16,6), sharex=True)
+fig, ax = plt.subplots(4, 1, figsize=(16,6), sharex=True)
+
+# Initialize input current vector
+steps = int((max_time)/dt)
+current = [0 for s in range(steps+1)]
+for i in range(len(current)):
+    if i >= int(current_start/dt) and i <= int(current_stop/dt) :
+        current[i] = I0
 
 # Analytical solution
 v_sol, r_sol = euler(I=current)
@@ -89,35 +69,21 @@ ax[0].plot(times, current, color='black')
 ax[0].set_xlabel('time')
 
 # Plotting voltage average
-times = [float(dt*k) for k in range(len(v))]
 ax[1].set_ylabel('v_avg(t)')
-ax[1].plot(times, v, c='k', label='numerical')
 ax[1].plot([float(dt*k) for k in range(len(v_sol))], v_sol, c='r', label='analytical')
 
 # Plotting firing rate average
-times = [float(dt*k) for k in range(len(r))]
 ax[2].set_ylabel('r(t)')
-ax[2].plot(times, r, c='k')
 ax[2].plot([float(dt*k) for k in range(len(r_sol))], r_sol, c='r')
 
 # Plotting Kuramoto order parameter abs value
 z_sol = euler_kuramoto(current)
-times = [float(dt*k) for k in range(len(z))]
-ax[3].plot(times, z, c='k')
 ax[3].plot([float(dt*k) for k in range(len(z_sol))], z_sol, c='r')
 ax[3].set_ylim(0, 1)
 ax[3].set_ylabel('$|Z|$')
 print(z_sol)
 
-# Plotting raster plot for 300 neurons
-ax[4].set_ylabel('neuron index')
-ax[4].scatter(times_raster, raster, s=0.9, c='k')
-ax[4].set_xlim(0, max_time)
-ax[4].set_ylim(0, sel_neurons)
-ax[4].set_xlabel('time')
-
-ax[1].legend(loc='upper right')
+#ax[1].legend(loc='upper right')
 plt.tight_layout()
-plt.savefig('full_model.png')
 plt.show()
 plt.close()

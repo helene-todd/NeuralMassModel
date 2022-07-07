@@ -29,19 +29,22 @@ raster_file = open('raster.dat', 'w')
 
 # Physical parameters
 neurons = 10**4
-sel_neurons = 1000
-v0, vr, vp = 0, -100, 100
-g, J = 0, 10
-eta_mean = 4
+sel_neurons = 10**3
+v0 = 0
+vr, vp = -40, 100
+a = abs(vp/vr)
+
+g, J = 4, -2
+eta_mean = 1
 delta = 1
-current_start, current_stop = 15, 16
-I = 0
+current_start, current_stop = 20, 25
+I = 20
 
 # Time parameters
-t_final, t_init = 20, 0
+t_final, t_init = 100, 0
 h = 10**(-3)
-tau, tau_d = 1, 5
-tau_s = tau*10**(-2)
+tau, tau_d = 1, 10
+tau_s = tau*10**(-2) # Or tau*10**(-2)
 steps = int((t_final - t_init)/h)
 refract_steps = int(tau/(vp*h))
 
@@ -106,7 +109,7 @@ for i in tqdm(range(steps+1)):
         v[0][n] = v[1][n]
         v_avg[i] += v[1][n]
 
-    w = math.pi*tau*round(fire_rate[i]/100, 5) + 1j*round(v_avg[i]/neurons, 5)
+    w = math.pi*tau*round(fire_rate[i]/100, 5) + 1j*(round(v_avg[i]/neurons, 5) + math.log(a)*tau*round(fire_rate[i]/100, 5))
     z[i] = abs((1-w.conjugate())/(1+w.conjugate()))
 
     # Save values on files
